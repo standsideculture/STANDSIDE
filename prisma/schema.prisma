@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role { OWNER ADMIN MARKETING DESIGNER CUSTOMER }
+enum OrderStatus { PENDING PAID PROCESSING SHIPPED COMPLETED CANCELLED }
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(CUSTOMER)
+  orders    Order[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  slug     String    @unique
+  products Product[]
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  name        String
+  slug        String      @unique
+  description String?
+  price       Int
+  stock       Int         @default(0)
+  image       String?
+  limited     Boolean     @default(false)
+  categoryId  String
+  category    Category    @relation(fields: [categoryId], references: [id])
+  items       OrderItem[]
+  verification ProductVerification?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model Order {
+  id          String      @id @default(cuid())
+  orderNumber String      @unique
+  userId      String
+  user        User        @relation(fields: [userId], references: [id])
+  status      OrderStatus @default(PENDING)
+  total       Int
+  items       OrderItem[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int
+  price     Int
+}
+
+model ProductVerification {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  productId   String   @unique
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  verifiedAt  DateTime?
+  verifyCount Int      @default(0)
+  createdAt   DateTime @default(now())
+}
