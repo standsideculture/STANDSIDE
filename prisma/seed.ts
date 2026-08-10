@@ -4,7 +4,11 @@ import bcrypt from 'bcryptjs'
 const prisma = new PrismaClient()
 
 async function main() {
-  const password = await bcrypt.hash(process.env.SEED_STAFF_PASSWORD || 'ChangeMe-StandSide-2026!', 12)
+  const rawPassword = process.env.SEED_STAFF_PASSWORD
+  if (!rawPassword || rawPassword.length < 12) {
+    throw new Error('SEED_STAFF_PASSWORD wajib diisi dan minimal 12 karakter.')
+  }
+  const password = await bcrypt.hash(rawPassword, 12)
 
   const staff = [
     { name: 'STANDSIDE Owner', email: process.env.SEED_OWNER_EMAIL || 'owner@standside.id', role: Role.OWNER },
